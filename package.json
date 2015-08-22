@@ -1,0 +1,21 @@
+{
+  "name": "hackIrcIntegration",
+  "version": "0.1.0",
+  "description": "Integrate hack.chat into your irc client",
+  "author": {
+    "name": "Manuel Herrmann",
+    "email": "njs@0x17.de",
+    "url": "0x17.de"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "main": "app.js",
+  "dependencies": {
+    "libircd.js": "0.1.1",
+    "libhack.js": "0.1.1"
+  },
+  "private": true,
+  "subdomain": "0x17",
+  "analyze": true
+}
