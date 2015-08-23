@@ -1,6 +1,7 @@
 var libircd = require("libircd.js");
 var libhack = require("libhack.js");
 var util = require("util");
+var fs = require("fs");
 
 var hackHostname = 'wss://hack.chat/chat-ws';
 var hackUsername = null; // set by irc client
@@ -8,6 +9,8 @@ var ircUserguid = null; // set by irc client
 
 var hackByChannelName = {};
 var hackChannelValidator = new RegExp("^[a-z]+$", "i");
+
+var config = JSON.parse(fs.readFileSync("./config.json"));
 
 function FakeIrcHackUser(nick) {
 	libircd.Client.call(this);
@@ -21,7 +24,7 @@ FakeIrcHackUser.prototype.write = function(data) {
 	// Nothing will happen here
 }
 
-var server = new libircd.IrcServer('wealllikedebian');
+var server = new libircd.IrcServer(config.serverPassword);
 server.on('message', function(json) {
 	var hackClient = hackByChannelName[json.channel];
 	if (!hackClient) return;
@@ -68,7 +71,12 @@ server.on('roomchange', function(roomJson) {
 		hackClient.on('begin', function() {
 			roomJson.joinFunction();
 		});
-		// @TODO: userchange event
+		hackClient.on('logged' function(json) {
+			// automatically connects fake users if they were not present before
+			var clientOfAction = getOrCreateFakeClient(roomJson.channel, json.nick);
+			if (!json.bLogin)
+				server.kick(json.nick, roomJson.channel);
+		});
 		hackClient.on('userlist', function(json) {
 			console.log(JSON.stringify(json));
 			for (var i = 0; i < json.nicks.length; ++i) {
@@ -105,5 +113,5 @@ server.on('roomchange', function(roomJson) {
 	}
 });
 
-server.start('0.0.0.0', 6667);
+server.start(config.listenIp, config.listenPort);
 

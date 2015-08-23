@@ -1,6 +1,6 @@
 {
   "name": "hackIrcIntegration",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Integrate hack.chat into your irc client",
   "author": {
     "name": "Manuel Herrmann",
