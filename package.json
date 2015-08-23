@@ -11,11 +11,21 @@
     "start": "node app.js"
   },
   "main": "app.js",
-  "dependencies": {
-    "libircd.js": "0.1.1",
-    "libhack.js": "0.1.1"
+  "license": {
+    "type": "MIT",
+    "url": "https://github.com/icetruckde/hackIrcIntegration/blob/master/LICENSE"
   },
-  "private": true,
+  "bugs": {
+    "url": "https://github.com/icetruckde/hackIrcIntegration/issues"
+  },
+  "dependencies": {
+    "libircd.js": "0.1.2",
+    "libhack.js": "0.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icetruckde/hackIrcIntegration.git"
+  },
   "subdomain": "0x17",
   "analyze": true
 }
