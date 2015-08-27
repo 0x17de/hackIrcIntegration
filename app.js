@@ -8,7 +8,7 @@ var hackUsername = null; // set by irc client
 var ircUserguid = null; // set by irc client
 
 var hackByChannelName = {};
-var hackChannelValidator = new RegExp("^[a-z]+$", "i");
+var hackChannelValidator = new RegExp("^[a-z0-9]+$", "i");
 
 var config = JSON.parse(fs.readFileSync("./config.json"));
 
@@ -55,10 +55,21 @@ server.on('roomchange', function(roomJson) {
 		server.clientJoinsChannel(client, roomJson.channel);
 		return client;
 	}
+	function removeFakeClient(channelName, nick) {
+		var channel = fakeClientsByChannel[channelName];
+		if (!channel) fakeClientsByChannel[channelName] = channel = {};
+		var client = channel[nick];
+		if (!client) return;
+		channel[''] -= 1;
+		server.kick(nick, channelName);
+		if (client.channelCount == 0)
+			server.killClient(client, libircd.KILLREASON.connectionClosed);
+		delete channel[nick];
+	}
 
 	var hackClient;
 	if (roomJson.bJoin) {
-		hackClient = hackByChannelName[roomJson.channel] = new libhack.Client(hackHostname, hackChannel, hackUsername);
+		hackClient = hackByChannelName[roomJson.channel] = new libhack.Client(hackHostname, hackChannel, hackUsername, config.userPassword);
 
 		hackClient.on('message', function(json) {
 			var channel = server.channels[roomJson.channel];
@@ -71,11 +82,12 @@ server.on('roomchange', function(roomJson) {
 		hackClient.on('begin', function() {
 			roomJson.joinFunction();
 		});
-		hackClient.on('logged' function(json) {
+		hackClient.on('logged', function(json) {
 			// automatically connects fake users if they were not present before
-			var clientOfAction = getOrCreateFakeClient(roomJson.channel, json.nick);
-			if (!json.bLogin)
-				server.kick(json.nick, roomJson.channel);
+			if (json.bLogin)
+				getOrCreateFakeClient(roomJson.channel, json.nick);
+			else
+				removeFakeClient(roomJson.channel, json.nick);
 		});
 		hackClient.on('userlist', function(json) {
 			console.log(JSON.stringify(json));
@@ -90,24 +102,16 @@ server.on('roomchange', function(roomJson) {
 
 		hackClient.connect();
 	} else {
-		hackClient = hackByChannelName[roomJson.channel];
-		if (hackClient) {
-			hackClient.disconnect();
-			delete hackByChannelName[roomJson.channel];
-		}
 		// Cleanup room?
 		var channel = server.channels[roomJson.channel];
-		if (channel) {
-			var clients = fakeClientsByChannel[roomJson.channel];
-			if (clients && channel.clientCount - clients.channel[''] == 0) {
-				var clients = fakeClientsByChannel[roomJson.channel];
-				for (var i in clients) {
-					if (i == '') continue;
-					server.kick(clients[i], channel);
-					if (clients[i].channelCount == 0)
-						server.killClient(clients[i]);
-					delete clients[i];
-				}
+		var clients = fakeClientsByChannel[roomJson.channel];
+		if (!channel || !clients || channel.clientCount - clients[''] == 0) { // empty, not counting fake users
+			server.removeChannel(channel);
+			delete fakeClientsByChannel[roomJson.channel];
+			hackClient = hackByChannelName[roomJson.channel];
+			if (hackClient) {
+				hackClient.disconnect();
+				delete hackByChannelName[roomJson.channel];
 			}
 		}
 	}
