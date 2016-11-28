@@ -19,7 +19,7 @@
     "url": "https://github.com/icetruckde/hackIrcIntegration/issues"
   },
   "dependencies": {
-    "libircd.js": "0.1.3",
+    "libircd.js": "0.1.4",
     "libhack.js": "0.1.3"
   },
   "repository": {
